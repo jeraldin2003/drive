@@ -208,6 +208,12 @@ def files(
         else:
             r["share_count"] = default
         r |= get_user_access(r["name"])
+
+        tags = frappe.get_all("Drive Entity Tag",filters = {"parent":r.name},pluck="tag")
+        r["tags"] =[tag for tag in tags]
+
+        print(r.tags)
+        
     return res
 
 

@@ -32,6 +32,11 @@
         ]"
       />
     </div>
+
+
+
+
+    
     <TextInput
       ref="search-input"
       v-model="search"
@@ -44,6 +49,30 @@
         <LucideSearch class="size-4" />
       </template>
     </TextInput>
+
+
+
+
+    <TextInput
+      ref="tagsearch-input"
+      v-model="tag"
+      :disabled
+      :class="selections.length ? 'hidden' : 'block'"
+      :placeholder="__('Tag')"
+      class="w-[30%]"
+    >
+      <template #prefix>
+        <LucideSearch class="size-4" />
+      </template>
+    </TextInput>
+
+
+
+
+
+
+
+
 
     <div class="flex gap-2 ml-auto my-auto">
       <template v-if="!selections?.length">
@@ -195,6 +224,7 @@ import LucideX from "~icons/lucide/x"
 
 const sortOrder = defineModel("sortOrder")
 const search = defineModel("search")
+const tag = defineModel("tag")
 const team = defineModel("team")
 const props = defineProps({
   selections: Array,
@@ -210,6 +240,8 @@ const viewState = ref(store.state.view)
 watch(viewState, (val) => store.commit("toggleView", val))
 const shareView = ref(store.state.shareView)
 const searchInput = useTemplateRef("search-input")
+const tagInput = useTemplateRef("tagsearch-input")
+
 
 const availableFilterTypes = computed(() => {
   if (!props.getEntities.data) return []
@@ -224,6 +256,11 @@ onKeyDown("Escape", () => {
   searchInput.value.el.blur()
   search.value = ""
 })
+onKeyDown("Escape", () => {
+  tagInput.value.el.blur()
+  tag.value = ""
+})
+
 
 const orderByItems = computed(() => {
   return columnHeaders.map((header) => ({

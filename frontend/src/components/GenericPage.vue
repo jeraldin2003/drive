@@ -19,6 +19,7 @@
     <DriveToolBar
       v-model:sort-order="sortOrder"
       v-model:search="search"
+      v-model:tag="tag"
       v-model:filters="filters"
       v-model:team="team"
       :action-items="actionItems"
@@ -155,6 +156,7 @@ const sortOrder = ref(
   }
 )
 const search = ref("")
+const tag = ref("") 
 const filters = ref([])
 
 const rows = ref(props.getEntities.data)
@@ -178,6 +180,62 @@ watch(search, (val) => {
   const search = new RegExp(val, "i")
   rows.value = props.getEntities.data.filter((k) => search.test(k.title))
 })
+
+
+
+
+
+
+
+watch(
+  [search, tag, filters, () => props.getEntities.data],
+  ([searchVal, tagVal, filterVal, data]) => {
+    if (!data) return
+
+    let result = [...data]
+
+    // 🔍 Name search
+    if (searchVal) {
+      const searchRegex = new RegExp(searchVal, "i")
+      result = result.filter((f) => searchRegex.test(f.title))
+    }
+
+    // 🏷️ Tag search (FIXED for `tags: []`)
+        if (tagVal) {
+      const tagParts = tagVal
+        .split(/[,\s]+/)   // space or comma separated
+        .filter(Boolean)
+
+      result = result.filter((file) =>
+        tagParts.every((part) =>
+          file.tags?.some((tag) =>
+            new RegExp(part, "i").test(tag)
+          )
+        )
+      )
+    }
+
+
+    // 📂 File type filter
+    if (filterVal.length) {
+      const types = filterVal.map((f) => f.name)
+      const includeFolder = types.includes("Folder")
+
+      result = result.filter(
+        ({ file_type, is_group }) =>
+          types.includes(file_type) || (includeFolder && is_group)
+      )
+    }
+
+    rows.value = sortEntities(result, sortOrder.value)
+  },
+  { immediate: true, deep: true }
+)
+
+
+
+
+
 
 watch(
   () => filters.value,
@@ -439,15 +497,13 @@ if (settings.data?.auto_detect_links) {
 
 const socket = inject("socket")
 socket.on("list-add", ({ file }) => {
-  refreshData()
-
-  // if (
-  //   file.parent_entity === props.getEntities.params.entity_name &&
-  //   !props.getEntities.data.find((k) => k.name === file.name)
-  // ) {
-  //   props.getEntities.data.push(...prettyData([file]))
-  //   props.getEntities.setData(props.getEntities.data)
-  // }
+  if (
+    file.parent_entity === props.getEntities.params.entity_name &&
+    !props.getEntities.data.find((k) => k.name === file.name)
+  ) {
+    props.getEntities.data.push(...prettyData([file]))
+    props.getEntities.setData(props.getEntities.data)
+  }
 })
 socket.on("list-update", ({ file }) => {
   if (file.parent_entity !== props.getEntities.params.entity_name) return
