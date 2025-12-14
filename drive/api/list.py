@@ -210,7 +210,7 @@ def files(
         r |= get_user_access(r["name"])
 
         tags = frappe.get_all("Drive Entity Tag",filters = {"parent":r.name},pluck="tag")
-        r["tags"] =[tag for tag in tags]
+        r["tags"] =[frappe.get_doc("Drive Tag",tag).title for tag in tags]
 
         print(r.tags)
         
